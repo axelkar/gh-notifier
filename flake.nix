@@ -1,7 +1,7 @@
 {
   description = "gh-notifier devel and build";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 
   # shell.nix compatibility
   inputs.flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";
@@ -14,13 +14,12 @@
       # Helper function to generate an attrset '{ x86_64-linux = f "x86_64-linux"; ... }'.
       forAllSystems = nixpkgs.lib.genAttrs targetSystems;
 
-      inherit (nixpkgs) lib;
       sharedOptionModule = { lib, pkgs, ... }: {
         options.services.gh-notifier = {
           enable = lib.mkEnableOption "GitHub Notifications notifier for Linux";
           package = lib.mkOption {
             type = lib.types.package;
-            default = self.packages.${pkgs.system}.default;
+            default = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
             defaultText = lib.literalMD "`gh-notifier` from the flake defining this module";
             description = ''
               Package to use.
@@ -61,7 +60,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         {
-          default = pkgs.rustPlatform.buildRustPackage rec {
+          default = pkgs.rustPlatform.buildRustPackage {
             pname = "gh-notifier";
             version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).package.version;
 
@@ -113,7 +112,7 @@
           };
         }
       );
-      nixosModules.default = { config, lib, pkgs, ... }:
+      nixosModules.default = { config, lib, ... }:
         let
           cfg = config.services.gh-notifier;
         in
@@ -136,7 +135,7 @@
             };
           };
         };
-      homeModules.default = { config, lib, pkgs, ... }:
+      homeModules.default = { config, lib, ... }:
         let
           cfg = config.services.gh-notifier;
         in
